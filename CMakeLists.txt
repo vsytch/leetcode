@@ -5,6 +5,7 @@ project(leetcode VERSION 0.1.0)
 
 find_package(range-v3 CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
+find_package(Threads REQUIRED)
 
 include(CTest)
 enable_testing()
@@ -13,9 +14,10 @@ function(add_exe exe)
   add_executable(${exe} ${exe}.cpp)
   target_compile_features(${exe} PRIVATE cxx_std_20)
   target_compile_options(${exe} PRIVATE -fcoroutines-ts -Wall -pedantic)
-  target_link_libraries(${exe} PRIVATE fmt::fmt range-v3 range-v3-meta range-v3::meta range-v3-concepts)
+  target_link_libraries(${exe} PRIVATE fmt::fmt range-v3 range-v3-meta range-v3::meta range-v3-concepts Threads::Threads)
 endfunction()
 
+add_exe(coFuture)
 add_exe(compareVersion)
 add_exe(shellSubstitute)
 
