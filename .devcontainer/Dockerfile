@@ -16,7 +16,7 @@ RUN if [ "${REINSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
     && rm -f /tmp/reinstall-cmake.sh
 
 # [Optional] Uncomment this section to install additional vcpkg ports.
-RUN su vscode -c "${VCPKG_ROOT}/vcpkg install fmt range-v3"
+RUN su vscode -c "${VCPKG_ROOT}/vcpkg install fmt range-v3 libunifex"
 
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
 
