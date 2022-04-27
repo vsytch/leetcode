@@ -28,6 +28,7 @@ endfunction()
 add_exe(coFuture)
 add_exe(compareVersion)
 add_exe(shellSubstitute)
+add_exe(sandr)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
