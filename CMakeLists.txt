@@ -8,6 +8,12 @@ find_package(fmt CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 find_package(unifex CONFIG REQUIRED)
 
+if(unifex_FOUND)
+  get_target_property(link_libs unifex::unifex INTERFACE_LINK_LIBRARIES)
+  list(REMOVE_ITEM link_libs std::coroutines)
+  set_property(TARGET unifex::unifex PROPERTY INTERFACE_LINK_LIBRARIES "${link_libs}")
+endif()
+
 include(CTest)
 enable_testing()
 

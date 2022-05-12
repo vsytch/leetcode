@@ -1,7 +1,7 @@
-# See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.231.6/containers/cpp/.devcontainer/base.Dockerfile
+# See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.234.0/containers/cpp/.devcontainer/base.Dockerfile
 
-# [Choice] Debian / Ubuntu version (use Debian 11, Ubuntu 18.04/21.04 on local arm64/Apple Silicon): debian-11, debian-10, ubuntu-21.04, ubuntu-20.04, ubuntu-18.04
-ARG VARIANT="ubuntu-21.04"
+# [Choice] Debian / Ubuntu version (use Debian 11, Ubuntu 18.04/22.04 on local arm64/Apple Silicon): debian-11, debian-10, ubuntu-22.04, ubuntu-20.04, ubuntu-18.04
+ARG VARIANT="bullseye"
 FROM mcr.microsoft.com/vscode/devcontainers/cpp:0-${VARIANT}
 
 # [Optional] Install CMake version different from what base image has already installed. 
@@ -16,23 +16,17 @@ RUN if [ "${REINSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
     && rm -f /tmp/reinstall-cmake.sh
 
 # [Optional] Uncomment this section to install additional vcpkg ports.
-RUN su vscode -c "${VCPKG_ROOT}/vcpkg install fmt range-v3 libunifex"
+RUN su vscode -c " \
+        git config --global --add safe.directory ${VCPKG_ROOT} && \
+        git -C ${VCPKG_ROOT} pull && \
+        ${VCPKG_ROOT}/bootstrap-vcpkg.sh && \
+        ${VCPKG_ROOT}/vcpkg install \
+            fmt \
+            libunifex \
+            range-v3"
 
-RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-
-# [Optional] Uncomment this section to install additional packages.
+# # [Optional] Uncomment this section to install additional packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
-    lsb-release \
-    software-properties-common \
-    wget \
-    ninja-build
-
-RUN wget -O - https://apt.llvm.org/llvm.sh > /tmp/llvm.sh && \
-    chmod +x /tmp/llvm.sh && \
-    export DEBIAN_FRONTEND=noninteractive && \
-    /tmp/llvm.sh 14 && \
-    apt-get -y install clang-tidy-14 && \
-    update-alternatives --install /usr/bin/clang clang /usr/bin/clang-14 14 && \
-    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-14 14 && \
-    update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-14 14
+        clang-format \
+        clang-tidy
