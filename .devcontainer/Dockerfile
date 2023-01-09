@@ -1,38 +1,45 @@
-# See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.231.6/containers/cpp/.devcontainer/base.Dockerfile
-
-# [Choice] Debian / Ubuntu version (use Debian 11, Ubuntu 18.04/21.04 on local arm64/Apple Silicon): debian-11, debian-10, ubuntu-21.04, ubuntu-20.04, ubuntu-18.04
-ARG VARIANT="ubuntu-21.04"
+ARG VARIANT=ubuntu-22.04
 FROM mcr.microsoft.com/vscode/devcontainers/cpp:0-${VARIANT}
 
-# [Optional] Install CMake version different from what base image has already installed. 
-# CMake reinstall choices: none, 3.21.5, 3.22.2, or versions from https://cmake.org/download/
-ARG REINSTALL_CMAKE_VERSION_FROM_SOURCE="none"
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && \
+    apt-get -y install --no-install-recommends \
+        lsb-release \
+        software-properties-common
 
-# Optionally install the cmake for vcpkg
+ARG REINSTALL_CMAKE_VERSION_FROM_SOURCE="3.23.1"
 COPY ./reinstall-cmake.sh /tmp/
 RUN if [ "${REINSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
         chmod +x /tmp/reinstall-cmake.sh && /tmp/reinstall-cmake.sh ${REINSTALL_CMAKE_VERSION_FROM_SOURCE}; \
     fi \
     && rm -f /tmp/reinstall-cmake.sh
 
-# [Optional] Uncomment this section to install additional vcpkg ports.
-RUN su vscode -c "${VCPKG_ROOT}/vcpkg install fmt range-v3 libunifex"
+ARG GCC_VERSION="12"
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get -y install gcc-12 g++-12 && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_VERSION} ${GCC_VERSION} && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION} ${GCC_VERSION}
 
+ARG CLANG_VERSION="16"
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-
-# [Optional] Uncomment this section to install additional packages.
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends \
-    lsb-release \
-    software-properties-common \
-    wget \
-    ninja-build
-
 RUN wget -O - https://apt.llvm.org/llvm.sh > /tmp/llvm.sh && \
     chmod +x /tmp/llvm.sh && \
     export DEBIAN_FRONTEND=noninteractive && \
-    /tmp/llvm.sh 14 && \
-    apt-get -y install clang-tidy-14 && \
-    update-alternatives --install /usr/bin/clang clang /usr/bin/clang-14 14 && \
-    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-14 14 && \
-    update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-14 14
+    /tmp/llvm.sh ${CLANG_VERSION} && \
+    update-alternatives --remove-all gcc && \
+    update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${CLANG_VERSION} ${CLANG_VERSION} && \
+    update-alternatives --set cc /usr/bin/clang && \
+    update-alternatives --remove-all g++ && \
+    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${CLANG_VERSION} ${CLANG_VERSION} && \
+    update-alternatives --set c++ /usr/bin/clang++ && \
+    apt-get -y install clang-tidy-${CLANG_VERSION} && \
+    update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${CLANG_VERSION} ${CLANG_VERSION}
+
+RUN su vscode -c "${VCPKG_ROOT}/vcpkg install \
+    fmt \
+    range-v3 \
+    libunifex \
+"
+
+RUN git clone https://github.com/NVIDIA/stdexec.git /usr/src/stdexec && \
+    cmake -S /usr/src/stdexec/ -B /tmp/stdexec/build/ && \
+    cmake --build /tmp/stdexec/build/ --target install
